@@ -38,7 +38,7 @@ void StrainGaugeHX711Init(HX711 &dip, HX711 &pip, HX711 &mcp) {
 
     dip.set_scale(dipJoint.scale_factor);
     pip.set_scale(pipJoint.scale_factor);
-    mcp.set_sclae(mcpJoint.scale_factor);
+    mcp.set_scale(mcpJoint.scale_factor);
 }
 
 // Strain gauge sensor function
