@@ -1,5 +1,5 @@
 // Libraries
-#include "HX711"
+#include "HX711.h"
 
 // Declare structures
 // Strain Gauge Structure
