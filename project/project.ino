@@ -9,10 +9,21 @@ struct strain_gauge
     float offset_value;
 };
 
+// Joint Angle Structure
+struct joint_pos
+{
+    float dip_angle;
+    float pip_angle;
+    float mcp_angle;
+};
+
 // Initialize sensor structures
 strain_gauge dipJoint; // smallest joint
 strain_gauge pipJoint; // middle joint
 strain_gauge mcpJoint; // knuckle joint
+
+// Initialize finger position structure
+joint_pos fingerJointPos;
 
 // Initialize HX711 modules
 HX711 dipSense;
@@ -41,7 +52,8 @@ void StrainGaugeHX711Init(HX711 &dip, HX711 &pip, HX711 &mcp) {
     mcp.set_scale(mcpJoint.scale_factor);
 }
 
-// Strain gauge sensor function
+// Strain gauge position function
+
 
 // Piezoelectric sensor function
 
