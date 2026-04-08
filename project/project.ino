@@ -1,6 +1,14 @@
 // Libraries
+#include "HX711"
 
 // Declare structures
+// Strain Gauge Structure
+struct strain_gauge
+{
+    float scale_factor;
+    float offset_value;
+};
+
 
 // Initialize sensors
 
