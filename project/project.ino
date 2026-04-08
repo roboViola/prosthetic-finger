@@ -76,5 +76,5 @@ void setup() {
 
 // loop(): runs continuously to execute main program functions
 void loop() {
-
+    getFingerJointPos();
 }
