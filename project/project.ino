@@ -31,7 +31,7 @@ HX711 pipSense;
 HX711 mcpSense;
 
 // StrainGaugeHX711Init(): initializes all properties
-void StrainGaugeHX711Init(HX711 &dip, HX711 &pip, HX711 &mcp) {
+void StrainGaugeHX711Init() {
     // Set offset values for the joints
     dipJoint.offset_value = 0;
     pipJoint.offset_value = 0;
@@ -43,17 +43,21 @@ void StrainGaugeHX711Init(HX711 &dip, HX711 &pip, HX711 &mcp) {
     mcpJoint.scale_factor = 0;
 
     // Set values for the sensors
-    dip.set_offset(dipJoint.offset_value);
-    pip.set_offset(pipJoint.offset_value);
-    mcp.set_offset(mcpJoint.offset_value);
+    dipSense.set_offset(dipJoint.offset_value);
+    pipSense.set_offset(pipJoint.offset_value);
+    mcpSense.set_offset(mcpJoint.offset_value);
 
-    dip.set_scale(dipJoint.scale_factor);
-    pip.set_scale(pipJoint.scale_factor);
-    mcp.set_scale(mcpJoint.scale_factor);
+    dipSense.set_scale(dipJoint.scale_factor);
+    pipSense.set_scale(pipJoint.scale_factor);
+    mcpSense.set_scale(mcpJoint.scale_factor);
 }
 
-// Strain gauge position function
-
+// getFingerJointPos(): get and store joint positions
+void getFingerJointPos() {
+    fingerJointPos.dip_angle = dipSense.get_units();
+    fingerJointPos.pip_angle = pipSense.get_units();
+    fingerJointPos.mcp_angle = mcpSense.get_units();
+}
 
 // Piezoelectric sensor function
 
@@ -66,10 +70,8 @@ void setup() {
     // Start serial monitor
     Serial.begin(9600);
 
-    
-
-    //
-    
+    // Set Up Strain Gauges and HX711
+    StrainGaugeHX711Init();    
 }
 
 // loop(): runs continuously to execute main program functions
