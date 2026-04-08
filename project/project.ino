@@ -9,8 +9,10 @@ struct strain_gauge
     float offset_value;
 };
 
-
 // Initialize sensors
+strain_gauge dipJoint; // smallest joint
+strain_gauge pipJoint; // middle joint
+strain_gauge mcpJoint; // knuckle joint
 
 // Strain gauge sensor function
 
