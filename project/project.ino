@@ -31,7 +31,6 @@ struct joint_pos
 };
 
 // Initialize sensor structures
-strain_gauge dipJoint; // smallest joint
 strain_gauge pipJoint; // middle joint
 strain_gauge mcpJoint; // knuckle joint
 
@@ -174,12 +173,12 @@ void loop() {
     if (millis() - strainMeasEvent > 150) {
         strainMeasEvent = millis();
 
-        if ((fingerJointPos.pip_angle - lastPIPMeas < -1000) & (fingerJointPos.mcp_angle - lastMCPMeas < -1000)) {
+        if ((fingerJointPos.pip_angle - lastPIPMeas < -1000) && (fingerJointPos.mcp_angle - lastMCPMeas < -1000) && !gripState) {
             gripState = true;
             Serial.println("TRUE");
         }
 
-        else if ((fingerJointPos.pip_angle - lastPIPMeas > 1000) & (fingerJointPos.mcp_angle - lastMCPMeas > 1000)) {
+        else if ((fingerJointPos.pip_angle - lastPIPMeas > 1000) && (fingerJointPos.mcp_angle - lastMCPMeas > 1000) && gripState) {
             gripState = false;
             Serial.println("FALSE");
         }
