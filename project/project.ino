@@ -93,6 +93,7 @@ int piezoSensor() {
 void controlMotor(int emgValue, int& count) {
     // Declare local variables
     bool direction;
+    unsigned long now = micros();
 
     // Set motor direction
     if (emgValue > EMG_GRIP_ON) {
@@ -105,11 +106,12 @@ void controlMotor(int emgValue, int& count) {
     digitalWrite(DIR_PIN, direction);
 
     // Move hand
-    if ((count < GRIP_STEPS && direction == LOW) || (count > 0 && direction == HIGH)){
+    unsigned long now = micros();
+    if (((count < GRIP_STEPS && direction == LOW) || (count > 0 && direction == HIGH)) && (now - lastStepTime >= stepDelay)){
         digitalWrite(STEP_PIN, HIGH);
-        delayMicroseconds(SPEED_DELAY);
+        delayMicroseconds(5);
         digitalWrite(STEP_PIN, LOW);
-        delayMicroseconds(SPEED_DELAY);
+        delayMicroseconds(10);
 
         if (direction == LOW) {
             count++;
