@@ -16,6 +16,13 @@ float lastPIPMeas = 0;
 float lastMCPMeas = 0;
 bool gripState = false;
 
+// Declare constants for EMG control
+const uint16_t GRIP_STEPS = 2000;
+const uint8_t SPEED_DELAY = 200;
+const uint8_t EMG_GRIP_ON; // FIXME: add threshold for gripping
+uint16_t stepCount = 0;
+
+
 // Strain Gauge Structure
 struct strain_gauge
 {
@@ -81,14 +88,36 @@ int piezoSensor() {
 
     return output;
 }
+
 // Control motor function
-void controlMotor(int emgValue, bool direction) {
+void controlMotor(int emgValue, int& count) {
+    // Declare local variables
+    bool direction;
+
+    // Set motor direction
+    if (emgValue > EMG_GRIP_ON) {
+        direction = LOW; // counter-clockwise; close hand
+    }
+    else {
+        direction = HIGH; // clockwise; open hand
+    }
+
     digitalWrite(DIR_PIN, direction);
-    int speedDelay = map(emgValue, 0, 1023, 2000, 200);
-    digitalWrite(STEP_PIN, HIGH);
-    delayMicroseconds(speedDelay);
-    digitalWrite(STEP_PIN, LOW);
-    delayMicroseconds(speedDelay);
+
+    // Move hand
+    if ((count < GRIP_STEPS && direction == LOW) || (count > 0 && direction == HIGH)){
+        digitalWrite(STEP_PIN, HIGH);
+        delayMicroseconds(SPEED_DELAY);
+        digitalWrite(STEP_PIN, LOW);
+        delayMicroseconds(SPEED_DELAY);
+
+        if (direction == LOW) {
+            count++;
+        }
+        else {
+            count--;
+        }
+    }
 }
 
 // Serial-controlled speed variables (0-100)
@@ -188,6 +217,7 @@ void loop() {
     }
 
     getFingerJointPos();
-    parseSerial();
-    stepperTick();
+    // parseSerial(); removed from debug
+    // stepperTick(); removed from debug
+    controlMotor(emgRead, stepCount);
 }
