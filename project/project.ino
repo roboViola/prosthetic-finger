@@ -42,7 +42,7 @@ strain_gauge pipJoint; // middle joint
 strain_gauge mcpJoint; // knuckle joint
 
 // Initialize finger position structure
-joint_pos fingerJointPos;
+joint_pos fingerPadStrain;
 
 // Initialize HX711 modules
 HX711 pipSense;
@@ -69,14 +69,14 @@ void StrainGaugeHX711Init() {
     mcpSense.set_scale(mcpJoint.scale_factor);
 }
 
-// getFingerJointPos(): get and store joint positions
-void getFingerJointPos() {
+// getStrainFeedback(): get and store joint positions
+void getStrainFeedback() {
     if (pipSense.is_ready()) {
-        fingerJointPos.pip_angle = pipSense.get_units();
+        fingerPadStrain.pip_angle = pipSense.get_units();
     }
 
     if (mcpSense.is_ready()) {
-        fingerJointPos.mcp_angle = mcpSense.get_units();
+        fingerPadStrain.mcp_angle = mcpSense.get_units();
     }
 }
 
@@ -180,9 +180,9 @@ void setup() {
     pinMode(STEP_PIN, OUTPUT);
     pinMode(DIR_PIN, OUTPUT);
 
-    getFingerJointPos();
-    lastPIPMeas = fingerJointPos.pip_angle;
-    lastMCPMeas = fingerJointPos.mcp_angle;
+    getStrainFeedback();
+    lastPIPMeas = fingerPadStrain.pip_angle;
+    lastMCPMeas = fingerPadStrain.mcp_angle;
 }
 
 // loop(): runs continuously to execute main program functions
@@ -202,21 +202,21 @@ void loop() {
     if (millis() - strainMeasEvent > 150) {
         strainMeasEvent = millis();
 
-        if ((fingerJointPos.pip_angle - lastPIPMeas < -1000) && (fingerJointPos.mcp_angle - lastMCPMeas < -1000) && !gripState) {
+        if ((fingerPadStrain.pip_angle - lastPIPMeas < -1000) && (fingerPadStrain.mcp_angle - lastMCPMeas < -1000) && !gripState) {
             gripState = true;
             Serial.println("TRUE");
         }
 
-        else if ((fingerJointPos.pip_angle - lastPIPMeas > 1000) && (fingerJointPos.mcp_angle - lastMCPMeas > 1000) && gripState) {
+        else if ((fingerPadStrain.pip_angle - lastPIPMeas > 1000) && (fingerPadStrain.mcp_angle - lastMCPMeas > 1000) && gripState) {
             gripState = false;
             Serial.println("FALSE");
         }
 
-        lastPIPMeas = fingerJointPos.pip_angle;
-        lastMCPMeas = fingerJointPos.mcp_angle;
+        lastPIPMeas = fingerPadStrain.pip_angle;
+        lastMCPMeas = fingerPadStrain.mcp_angle;
     }
 
-    getFingerJointPos();
+    getStrainFeedback();
     // parseSerial(); removed from debug
     // stepperTick(); removed from debug
     controlMotor(emgRead, stepCount);
