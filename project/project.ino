@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <HX711.h>
 
-// Declare structures
+// Declare pins
 #define STEP_PIN 3
 #define DIR_PIN 4
 #define HAPTIC_PIN 5
@@ -9,6 +9,12 @@
 #define MCP_DAT_PIN 7
 #define PIP_CLK_PIN 8
 #define MCP_CLK_PIN 9
+
+// Declare variables for strain gauge force detection
+unsigned long strainMeasEvent = 0;
+float lastPIPMeas = 0;
+float lastMCPMeas = 0;
+bool gripState = false;
 
 // Strain Gauge Structure
 struct strain_gauge
@@ -33,7 +39,6 @@ strain_gauge mcpJoint; // knuckle joint
 joint_pos fingerJointPos;
 
 // Initialize HX711 modules
-HX711 dipSense;
 HX711 pipSense;
 HX711 mcpSense;
 
@@ -48,19 +53,25 @@ void StrainGaugeHX711Init() {
     mcpJoint.scale_factor = 0;
 
     // Set values for the sensors
+    pipSense.begin(PIP_DAT_PIN, PIP_CLK_PIN);
+    mcpSense.begin(MCP_DAT_PIN, MCP_CLK_PIN);
+
     pipSense.set_offset(pipJoint.offset_value);
     mcpSense.set_offset(mcpJoint.offset_value);
 
     pipSense.set_scale(pipJoint.scale_factor);
     mcpSense.set_scale(mcpJoint.scale_factor);
-
-    pipJoint.begin(PIP_DAT_PIN, PIP_CLK_PIN);
-    mcpJoint.begin(MCP_DAT_PIN, MCP_CLK_PIN);
 }
+
 // getFingerJointPos(): get and store joint positions
 void getFingerJointPos() {
-    fingerJointPos.pip_angle = pipSense.get_units();
-    fingerJointPos.mcp_angle = mcpSense.get_units();
+    if (pipSense.is_ready()) {
+        fingerJointPos.pip_angle = pipSense.get_units();
+    }
+
+    if (mcpSense.is_ready()) {
+        fingerJointPos.mcp_angle = mcpSense.get_units();
+    }
 }
 
 // Piezoelectric sensor function
@@ -134,12 +145,18 @@ void parseSerial() {
 void setup() {
     // Start serial monitor
     Serial.begin(9600);
+    delay(2000);
 
     // Set Up Strain Gauges and HX711
     StrainGaugeHX711Init();
     pinMode(STEP_PIN, OUTPUT);
     pinMode(DIR_PIN, OUTPUT);
+
+    getFingerJointPos();
+    lastPIPMeas = fingerJointPos.pip_angle;
+    lastMCPMeas = fingerJointPos.mcp_angle;
 }
+
 // loop(): runs continuously to execute main program functions
 void loop() {
     static unsigned long lastPrint = 0;
@@ -151,6 +168,24 @@ void loop() {
         // Map analog 1023=0% to 753=100%, constrain outside that range
         int hapticVal = map(constrain(val, 753, 1023), 1023, 753, 0, 255);
         analogWrite(HAPTIC_PIN, hapticVal);
+    }
+
+    // Watch for change in strain gauge data
+    if (millis() - strainMeasEvent > 150) {
+        strainMeasEvent = millis();
+
+        if ((fingerJointPos.pip_angle - lastPIPMeas < -1000) & (fingerJointPos.mcp_angle - lastMCPMeas < -1000)) {
+            gripState = true;
+            Serial.println("TRUE");
+        }
+
+        else if ((fingerJointPos.pip_angle - lastPIPMeas > 1000) & (fingerJointPos.mcp_angle - lastMCPMeas > 1000)) {
+            gripState = false;
+            Serial.println("FALSE");
+        }
+
+        lastPIPMeas = fingerJointPos.pip_angle;
+        lastMCPMeas = fingerJointPos.mcp_angle;
     }
 
     getFingerJointPos();

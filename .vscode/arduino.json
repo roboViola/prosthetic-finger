@@ -1,4 +1,4 @@
 {
-    "configuration": "usb=serial,speed=600,opt=o2std,keys=en-us",
-    "board": "teensy:avr:teensy40"
+    "configuration": "cpu=atmega2560",
+    "board": "arduino:avr:mega"
 }
