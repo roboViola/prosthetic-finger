@@ -19,9 +19,10 @@ bool gripState = false;
 // Declare constants for EMG control
 const uint16_t GRIP_STEPS = 2000;
 const uint8_t SPEED_DELAY = 200;
-const uint8_t EMG_GRIP_ON; // FIXME: add threshold for gripping
+const uint8_t EMG_GRIP_ON = 100; // FIXME: add threshold for gripping
 uint16_t stepCount = 0;
-
+unsigned long lastStepTime = 0;
+int emgRead;
 
 // Strain Gauge Structure
 struct strain_gauge
@@ -90,7 +91,7 @@ int piezoSensor() {
 }
 
 // Control motor function
-void controlMotor(int emgValue, int& count) {
+void controlMotor(int emgValue, uint16_t& count) {
     // Declare local variables
     bool direction;
     unsigned long now = micros();
@@ -106,8 +107,7 @@ void controlMotor(int emgValue, int& count) {
     digitalWrite(DIR_PIN, direction);
 
     // Move hand
-    unsigned long now = micros();
-    if (((count < GRIP_STEPS && direction == LOW) || (count > 0 && direction == HIGH)) && (now - lastStepTime >= stepDelay)){
+    if (((count < GRIP_STEPS && direction == LOW) || (count > 0 && direction == HIGH)) && (now - lastStepTime >= SPEED_DELAY)){
         digitalWrite(STEP_PIN, HIGH);
         delayMicroseconds(5);
         digitalWrite(STEP_PIN, LOW);
@@ -119,55 +119,6 @@ void controlMotor(int emgValue, int& count) {
         else {
             count--;
         }
-    }
-}
-
-// Serial-controlled speed variables (0-100)
-int stepperSpeed = 0;
-int vibSpeed = 0;
-unsigned long lastStepTime = 0;
-
-// stepperTick(): non-blocking stepper — call every loop()
-void stepperTick() {
-    if (stepperSpeed == 0) return;
-    unsigned long stepDelay = map(stepperSpeed, 1, 100, 5000, 200);
-    unsigned long now = micros();
-    if (now - lastStepTime >= stepDelay) {
-        lastStepTime = now;
-        delayMicroseconds(5);  // give DIR time to settle
-        digitalWrite(STEP_PIN, HIGH);
-        delayMicroseconds(10);
-        digitalWrite(STEP_PIN, LOW);
-    }
-}
-
-// parseSerial(): handle serial commands
-//   S<0-100> → stepper speed  e.g. "S50"
-//   V<0-100> → vibration PWM  e.g. "V75"
-//   D<0|1>   → stepper dir    e.g. "D1"
-void parseSerial() {
-    if (!Serial.available()) return;
-
-    String cmd = Serial.readStringUntil('\n');
-    cmd.trim();
-
-    if (cmd.length() < 2) return;
-
-    char type = cmd.charAt(0);
-    int  val  = cmd.substring(1).toInt();
-
-    if (type == 'S' || type == 's') {
-        stepperSpeed = constrain(val, 0, 100);
-        Serial.print("Stepper speed: "); Serial.println(stepperSpeed);
-    }
-    else if (type == 'V' || type == 'v') {
-        vibSpeed = constrain(val, 0, 100);
-        analogWrite(HAPTIC_PIN, map(vibSpeed, 0, 100, 0, 255));
-        Serial.print("Vib speed: "); Serial.println(vibSpeed);
-    }
-    else if (type == 'D' || type == 'd') {
-        digitalWrite(DIR_PIN, val ? HIGH : LOW);
-        Serial.print("Direction: "); Serial.println(val ? "HIGH" : "LOW");
     }
 }
 
@@ -185,6 +136,8 @@ void setup() {
     getStrainFeedback();
     lastPIPMeas = fingerPadStrain.pip_angle;
     lastMCPMeas = fingerPadStrain.mcp_angle;
+
+    emgRead = analogRead(17);
 }
 
 // loop(): runs continuously to execute main program functions
